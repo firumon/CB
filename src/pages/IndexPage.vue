@@ -20,13 +20,19 @@
 
 		<q-separator />
 
+    <q-card-section v-if="admin">
+      <q-input outlined type="textarea" v-model="wMsg" label="WhatsApp Message" />
+    </q-card-section>
+
+    <q-separator v-if="admin" />
+
 		<q-list separator v-if="Object.keys(bookings).length">
 			<q-item>
 				<q-item-label header>👇 ഇതുവരെ ബുക്ക് ചെയ്തത് {{ Object.keys(bookings).length }} പേർ, {{ total }} എണ്ണം</q-item-label>
 			</q-item>
 			<q-item v-for="(booking,id,idx) in bookings" :key="id">
 <!--				<q-item-section side class='text-bold'>{{ idx+1 }}</q-item-section>-->
-				<q-item-section>
+				<q-item-section @click="openWhatsApp(booking.phone)" :class="{ 'cursor-pointer':admin }">
 					<q-item-label>{{ booking.name }}</q-item-label>
 					<q-item-label caption>{{ booking.phone }}</q-item-label>
 				</q-item-section>
@@ -51,11 +57,12 @@
 <script setup>
 	import { db,collection,getDocs,addDoc,deleteDoc,doc,updateDoc } from 'boot/firebase.js';
 	import { ref,reactive } from 'vue'
+	import { openURL } from 'quasar'
   import { useRoute } from 'vue-router'
 
   const route = useRoute();
 	const admin = route.meta && route.meta.admin
-  const bookings = ref({}), loading = ref(false), total = ref(0);
+  const bookings = ref({}), loading = ref(false), total = ref(0), wMsg = ref('');
 	const person = reactive({ name:'',phone:'',quantity:1 })
 	async function setBookings(){
 		loading.value = true;
@@ -68,6 +75,11 @@
 	}
 
 	setBookings();
+
+  function openWhatsApp(num){
+    if(!admin) return;
+    openURL('https://api.whatsapp.com/send?phone=91'+num+'&text='+encodeURI(wMsg.value))
+  }
 
 	async function addName(){
 		if(!person.name || !person.phone) return alert('പേരും ഫോൺ നമ്പറും നിർബന്ധമാണ് സുഹൃത്തേ ');
